@@ -7,7 +7,9 @@ gem "propshaft"
 # Use sqlite3 as the database for Active Record
 # gem "sqlite3", ">= 2.1"
 # Use postgresql as the database for Active Record
-gem 'pg', '~> 1.6', '>= 1.6.2'
+gem "pg", "~> 1.6", ">= 1.6.2"
+# Use redis for caching
+# gem "redis", "~> 5.4", ">= 5.4.1"
 # Use the Puma web server [https://github.com/puma/puma]
 gem "puma", ">= 5.0"
 # Use JavaScript with ESM import maps [https://github.com/rails/importmap-rails]
@@ -65,7 +67,7 @@ group :test do
 end
 
 # Env loader
-gem 'dotenv', groups: [:development, :test]
+gem "dotenv", groups: [ :development, :test ]
 
 # Google OAuth
 gem "omniauth", "~> 2.1", ">= 2.1.3"
@@ -81,3 +83,7 @@ gem "tailwindcss-rails", "~> 4.3"
 
 # Dummy
 gem "faker", "~> 3.5"
+
+# Background process
+gem "sidekiq", "~> 7.1", ">= 7.1.2"
+gem "sidekiq-scheduler", "~> 5.0", ">= 5.0.3"
