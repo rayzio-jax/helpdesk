@@ -86,4 +86,4 @@ gem "faker", "~> 3.5"
 
 # Background process
 gem "sidekiq", "~> 7.1", ">= 7.1.2"
-gem "sidekiq-scheduler", "~> 5.0", ">= 5.0.3"
+gem "sidekiq-scheduler", "~> 6.0"
