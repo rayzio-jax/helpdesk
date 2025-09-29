@@ -1,0 +1,4 @@
+:schedule:
+  pubsub_renewal:
+    every: 5d
+    class: PubsubRenewalJob

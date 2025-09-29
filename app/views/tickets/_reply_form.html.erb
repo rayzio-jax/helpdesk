@@ -1,0 +1,24 @@
+<dialog id="replyModal_<%= ticket.id %>" class="modal">
+	<div class="modal-box space-y-5">
+		<div class="flex justify-between">
+			<h3 class="text-lg font-bold">Reply to <%= ticket.from_email %></h3>
+			<form method="dialog">
+				<button class="btn btn-error">X</button>
+			</form>
+		</div>
+		<%= form_with url: reply_ticket_path(ticket), method: :post do |f| %>
+			<%= f.hidden_field :to, value: ticket.from_email %>
+			<div class="form-control flex flex-col space-y-2">
+				<label class="label">Subject</label>
+				<%= f.text_field :subject, class: "input input-bordered w-full focus:outline-none", value: "Re: #{ticket.subject}" %>
+			</div>
+			<div class="form-control flex flex-col space-y-2">
+				<label class="label">Body</label>
+				<%= f.text_area :body, class: "textarea textarea-bordered resize-none w-full focus:outline-none", rows: 5 %>
+			</div>
+			<div class="modal-action">
+				<%= f.submit "Reply", class: "btn btn-primary" %>
+			</div>
+		<% end %>
+	</div>
+</dialog>

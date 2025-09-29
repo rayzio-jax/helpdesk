@@ -1,14 +1,34 @@
 Rails.application.routes.draw do
-  # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
+  get "tickets/index"
+  get "tickets/push"
+  get "tickets/poll"
+  get "users/new"
+  resources :passwords, param: :token
 
-  # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
-  # Can be used by load balancers and uptime monitors to verify that the app is live.
-  get "up" => "rails/health#show", as: :rails_health_check
+  # Authentication
+  get :login, to: "sessions#new", as: :login
+  post :login, to: "sessions#create"
+  get :logout, to: "sessions#destroy", as: :logout
 
-  # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
-  # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
-  # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
+  get :signup, to: "users#new", as: :signup
+  post :signup, to: "users#create"
 
-  # Defines the root path route ("/")
-  # root "posts#index"
+  # OAuth
+  post "/auth/google_oauth2", as: :google_oauth2
+  get "/auth/:provider/callback", to: "omniauth#callback"
+
+  # Gmail poller
+  get "/tickets-poll", to: "tickets#index_with_poll", as: :tickets_polling
+  get "/tickets-pubsub", to: "tickets#index_with_pubsub", as: :tickets_pubsub
+  post "/tickets/push", to: "tickets#push", as: :mail_push
+  get "/tickets/poll", to: "tickets#poll", as: :mail_poll
+
+  resources :tickets do
+    post :reply, on: :member
+    collection do
+      patch :toggle_gmail_watch
+    end
+  end
+
+  root "home#index"
 end

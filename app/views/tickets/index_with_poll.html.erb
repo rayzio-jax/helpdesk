@@ -1,0 +1,60 @@
+<div class="flex flex-col gap-4 my-4">
+	<div class="flex items-center justify-between">
+		<div class="flex items-center gap-3">
+			<%= link_to "Log out", logout_path, class: "btn btn-soft w-fit", method: :delete, data: { confirm: "Are you sure?" } %>
+			<%= link_to "Home", root_path, class: "btn btn-primary w-fit", method: :delete, data: { confirm: "Are you sure?" } %>
+			<p class="text-lg font-semibold"><%= @user.name %></p>
+			<% if flash[:notice] %>
+				<span>
+					<div class="inline-grid *:[grid-area:1/1]">
+						<div class="status status-info animate-ping"></div>
+						<div class="status status-info"></div>
+					</div>
+					<%= flash[:notice] %>
+				</span>
+			<% end %>
+			<% if flash[:alert] %>
+				<span>
+					<div class="inline-grid *:[grid-area:1/1]">
+						<div class="status status-error animate-ping"></div>
+						<div class="status status-error"></div>
+					</div>
+					<%= flash[:alert] %>
+				</span>
+			<% end %>
+		</div>
+		<div class="flex items-center gap-3">
+			<turbo-frame id="gmail_watch_status" class="inline-flex gap-2 items-center">
+				<div class="status <%= @account.gmail_watch_enabled? ? 'status-info animate-bounce' : 'status-error animate-bounce' %>"></div>
+				<p class="text-lg">Pubsub watcher is <%= @watcher %></p>
+			</turbo-frame>
+			<%= form_with url: toggle_gmail_watch_tickets_path, method: :patch, data: { turbo_stream: true, turbo_frame: "gmail_watch_toggle" } do %>
+				<%= check_box_tag "gmail_watch",
+                    "1",
+                    @account.gmail_watch_enabled?,
+                    class: "toggle",
+                    onchange: "this.form.requestSubmit();" %>
+			<% end %>
+		</div>
+	</div>
+	<div class="overflow-x-auto rounded-box border border-base-content/5 bg-base-100">
+		<% if alert = flash[:alert] %>
+			<p class="py-2 px-3 bg-red-50 mb-5 text-red-500 font-medium rounded-lg inline-block" id="alert"><%= alert %></p>
+		<% end %>
+		<table class="table">
+			<!-- head -->
+			<thead>
+				<tr>
+					<th>Id</th>
+					<th>From</th>
+					<th>Subject</th>
+					<th>Body</th>
+					<th>Date</th>
+				</tr>
+			</thead>
+			<tbody>
+				<%= render partial: 'tickets', locals: { tickets: @tickets } %>
+			</tbody>
+		</table>
+	</div>
+</div>

@@ -1,0 +1,11 @@
+<tr id="ticket_<%= ticket.id %>">
+	<th><%= ticket.id %></th>
+	<td><%= ticket.from_email %></td>
+	<td><%= ticket.subject %></td>
+	<td><%= ticket.body %></td>
+	<td><%= ticket.received_at.strftime("%a, %d %b %Y %I:%M:%S %p") %></td>
+	<td>
+		<button class="btn" onclick="document.getElementById('replyModal_<%= ticket.id %>').showModal()">Reply</button>
+	</td>
+</tr>
+<%= render "reply_form", ticket: ticket %>
