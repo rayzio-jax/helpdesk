@@ -1,9 +1,9 @@
 <div class="flex flex-col gap-4 my-4">
 	<div class="inline-flex items-center gap-2">
 		<% if authenticated? %>
-			<%= link_to "Log out", logout_path, class: "btn btn-soft w-fit", method: :delete, data: { confirm: "Are you sure?" } %>
+			<%= link_to "Log out", logout_path, class: "btn btn-soft w-fit", method: :delete %>
 		<% else %>
-			<%= link_to "Log in", login_path, class: "btn btn-secondary w-fit", method: :delete, data: { confirm: "Are you sure?" } %>
+			<%= link_to "Log in", login_path, class: "btn btn-secondary w-fit" %>
 		<% end %>
 		<%= link_to "Tickets with Pub/Sub", tickets_pubsub_path, class: "btn btn-primary" %>
 		<%= link_to "Tickets with Polling", tickets_polling_path, class: "btn btn-primary" %>

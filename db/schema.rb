@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_29_033915) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_30_084302) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -25,6 +25,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_29_033915) do
     t.datetime "updated_at", null: false
     t.string "gmail_history_id"
     t.boolean "gmail_watch_enabled", default: false
+    t.datetime "last_polled_at"
     t.index ["user_id"], name: "index_accounts_on_user_id"
   end
 
@@ -34,6 +35,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_29_033915) do
     t.string "user_agent"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "expires_at"
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 

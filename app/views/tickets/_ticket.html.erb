@@ -1,4 +1,4 @@
-<tr id="ticket_<%= ticket.id %>">
+<tr id="<%= dom_id(ticket) %>">
 	<th><%= ticket.id %></th>
 	<td><%= ticket.from_email %></td>
 	<td><%= ticket.subject %></td>
@@ -8,4 +8,4 @@
 		<button class="btn" onclick="document.getElementById('replyModal_<%= ticket.id %>').showModal()">Reply</button>
 	</td>
 </tr>
-<%= render "reply_form", ticket: ticket %>
+<%= render "tickets/reply_form", ticket: ticket %>

@@ -1,4 +1,12 @@
-:schedule:
-  pubsub_renewal:
-    every: 5d
-    class: PubsubRenewalJob
+:concurrency: 5
+:queues:
+  - default
+
+:scheduler:
+  enabled: true
+  dynamic: true
+  :schedule:
+    gmail_poll:
+      cron: "*/1 * * * *"
+      class: "GmailPollJob"
+      queue: default

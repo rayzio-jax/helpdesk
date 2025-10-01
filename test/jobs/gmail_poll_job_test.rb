@@ -1,6 +1,6 @@
 require "test_helper"
 
-class PubSubRenewalJobTest < ActiveJob::TestCase
+class GmailPollJobTest < ActiveJob::TestCase
   # test "the truth" do
   #   assert true
   # end

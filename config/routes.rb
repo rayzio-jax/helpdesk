@@ -1,3 +1,5 @@
+require "sidekiq/web"
+
 Rails.application.routes.draw do
   get "tickets/index"
   get "tickets/push"
@@ -22,6 +24,8 @@ Rails.application.routes.draw do
   get "/tickets-pubsub", to: "tickets#index_with_pubsub", as: :tickets_pubsub
   post "/tickets/push", to: "tickets#push", as: :mail_push
   get "/tickets/poll", to: "tickets#poll", as: :mail_poll
+
+  mount Sidekiq::Web => "/sidekiq" # mount Sidekiq::Web in your Rails app
 
   resources :tickets do
     post :reply, on: :member

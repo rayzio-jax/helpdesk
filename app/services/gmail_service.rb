@@ -49,28 +49,38 @@ class GmailService
   end
 
   # Polling method
-  def poll(after = nil)
-    latest_ticket_time = Ticket.where(user: Current.user).maximum(:received_at)
-    query_time = after || latest_ticket_time || Time.now
-    query = "in:inbox is:unread after#{query_time.to_i}"
+  def poll(after)
+    Rails.logger.info "Start Polling for User #{@user}"
+    begin
+      latest_ticket_time = Ticket.where(user: @user).maximum(:received_at)
+      query_time = after || latest_ticket_time
+      query = "in:inbox is:unread after:#{query_time.to_i}"
 
-    messages = @service.list_user_messages("me", q: query, max_results: 10).messages || []
-    messages.map do |msg|
-      email = @service.get_user_message("me", msg.id, format: "full")
-      payload = email.payload
-      mail_id = email.id
-      from = email.headers.find { |h| h.name == "From" }.value
-      subject = email.headers.find { |h| h.name == "Subject" }.value
-      body = payload.parts&.find { |p| p.mime_type == "text/plain" }&.body&.data || ""
-      received_at = email.internal_date / 1000
+      messages = @service.list_user_messages("me", q: query, max_results: 10, label_ids: [ "INBOX" ]).messages || []
 
-      Current.user.tickets.create!(mail_id: mail_id, from_email: from, subject: subject, body: body, received_at: received_at)
-      @service.modify_message("me", msg.id, Google::Apis::GmailV1::ModifyMessageRequest.new(remove_label_ids: [ "UNREAD" ]))
+      if messages.empty?
+          Rails.logger.info "No unread messages found for user #{@user.id} with query: #{query}"
+          return []
+      end
+
+      messages.map do |msg|
+        message = @service.get_user_message("me", msg.id, format: "full")
+        @service.modify_message("me", msg.id, Google::Apis::GmailV1::ModifyMessageRequest.new(remove_label_ids: [ "UNREAD" ]))
+        create_ticket(message)
+      rescue ActiveRecord::RecordInvalid => e
+        Rails.logger.error "Failed to create ticket for email #{msg&.id}: #{e.message}"
+        nil # Skip failed ticket creation
+      end.compact # Remove nil results
+    rescue Google::Apis::ClientError => e
+      Rails.logger.error "Gmail API error for user #{@user.id}: #{e.message}"
+      []
+    rescue StandardError => e
+      Rails.logger.error "Unexpected error polling emails for user #{@user.id}: #{e.message}"
+      []
     end
   end
 
   # Pub/Sub method
-  #
   def enable_watch
     response = @service.watch_user("me", Google::Apis::GmailV1::WatchRequest.new(topic_name: ENV["GOOGLE_PUBSUB_TOPIC"], label_ids: [ "INBOX" ], label_filter_behavior: "include"))
     @account.update!(gmail_watch_enabled: true, gmail_history_id: response.history_id)
@@ -97,13 +107,13 @@ class GmailService
 
   def process_new_emails(history_id)
     start_id = @account.gmail_history_id || history_id
-    history = @service.list_user_histories("me", start_history_id: start_id, label_id: "INBOX")
+    list_history = @service.list_user_histories("me", start_history_id: start_id, label_id: "INBOX")
     return unless history.history&.any?
 
-    history.history.each do |h|
-      h.messages_added&.each do |msg|
-        email = @service.get_user_message("me", msg.message.id)
-        @service.modify_message("me", msg.message.id, Google::Apis::GmailV1::ModifyMessageRequest.new(remove_label_ids: [ "UNREAD" ]))
+    list_history.history.each do |h|
+      h.messages_added&.each do |data|
+        email = @service.get_user_message("me", data.message.id)
+        @service.modify_message("me", data.message.id, Google::Apis::GmailV1::ModifyMessageRequest.new(remove_label_ids: [ "UNREAD" ]))
         create_ticket(email)
       end
     end

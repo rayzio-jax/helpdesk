@@ -1,15 +1,34 @@
 class TicketsController < ApplicationController
-  before_action :set_service_and_account, except: [ :push ]
+  allow_unauthenticated_access only: %i[ push ]
 
-  skip_before_action :require_authentication, only: [ :push ]
+  before_action :set_service_and_account, except: [ :push ]
   skip_before_action :verify_authenticity_token, only: [ :push ]
 
   def index_with_poll
-    @tickets = Ticket.all.order(received_at: :desc)
+    @tickets = @user.tickets.all.order(received_at: :desc)
+
+    if sidekiq_running?
+      # Sidekiq is running → compute next poll normally
+      last_run = @user.accounts.maximum(:last_polled_at) || Time.current
+      @next_poll_time = last_run + 1.minute
+    else
+      # Sidekiq is down → show paused
+      @next_poll_time = nil
+    end
+
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: [
+          turbo_stream.replace("ticket_list", partial: "tickets/ticket", collection: @tickets, as: :ticket),
+          turbo_stream.replace("next_poll", partial: "tickets/next_poll", locals: { next_poll_time: @next_poll_time })
+        ]
+      end
+      format.html
+    end
   end
 
   def index_with_pubsub
-    @tickets = Current.user.tickets.all.order(received_at: :desc)
+    @tickets = @user.tickets.all.order(received_at: :desc)
     @watcher = @account.gmail_watch_enabled? ? "enabled" : "disabled"
     respond_to do |format|
       format.turbo_stream do
@@ -101,8 +120,20 @@ class TicketsController < ApplicationController
   end
 
   def poll
-    @service.poll
-    redirect_to tickets_path, notice: "Polled emails successfully."
+    @service.poll(1.hour.ago)
+    flash.now[:notice] = "Polled emails successfully"
+
+    @tickets = @user.tickets.all.order(received_at: :desc)
+
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: [
+          turbo_stream.replace("flash_messages", partial: "flash"),
+          turbo_stream.replace("ticket_list", partial: "tickets/ticket", collection: @tickets, as: :ticket)
+        ]
+      end
+      format.html { redirect_to tickets_polling_path }
+    end
   end
 
   private
@@ -115,5 +146,9 @@ class TicketsController < ApplicationController
     end
     @account = @user.accounts.find_by(provider: "google_oauth2")
     @service = GmailService.new(@user)
+  end
+
+  def sidekiq_running?
+    Sidekiq::ProcessSet.new.size > 0
   end
 end
